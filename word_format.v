@@ -22,18 +22,21 @@ module word_format(
 	
 	input Clk, input SCEN, input RESET,
 	input UP, input DOWN, input LEFT, input RIGHT,
-	output pos;
+	
+	
 	output q_I, output q_Let, output q_Pos,
+	output pos;
 	output [4:0] word_array [0:4], // A-Z = 26 letters = 5 bits
 	);
 	
+	reg [2:0] state;
+	assign {q_Pos, q_Let, q_I} = state;
 	localparam
 	I = 3'b001, LetterChange = 3'b010, PosChange = 3'b100, UNK = 3'bXXX;
 
 	// wires and registers
 	wire [2:0] pos; // 5 positions for letters
 	
-
 	always @ (posedge Clk, posedge RESET)
 	begin
 		if(RESET)
@@ -50,6 +53,7 @@ module word_format(
 					// data transfers
 					pos <= 0;
 				end
+				
 				LetterChange:
 				if(SCEN)
 					begin
@@ -67,6 +71,8 @@ module word_format(
 						end
 						else if (LEFT || RIGHT)
 							state <= PosChange;
+						else if (CENTER)
+							state <= I;
 					end
 				
 				PosChange:
@@ -86,6 +92,8 @@ module word_format(
 						end
 						else if(UP || DOWN)
 							state <= LetterChange;
+						else if(CENTER)
+							state <= I;
 					end
 				
 	end
