@@ -5,7 +5,7 @@
 // 
 // Create Date:    13:08:25 12/01/2017 
 // Design Name: 
-// Module Name:    counterVerilog 
+// Module Name:    word_format 
 // Project Name: 
 // Target Devices: 
 // Tool versions: 
@@ -20,8 +20,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 module word_format(
 	
-	input Clk, input SCEN, input RESET,
-	input UP, input DOWN, input LEFT, input RIGHT,
+	input Clk, input SCEN, input RESET, input Start,
+	input UP, input DOWN, input LEFT, input RIGHT, input CENTER,
 	
 	
 	output q_I, output q_Let, output q_Pos,
@@ -96,6 +96,7 @@ module word_format(
 							state <= I;
 					end
 				
+			endcase
 	end
 	
 endmodule
