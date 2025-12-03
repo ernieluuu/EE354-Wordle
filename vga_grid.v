@@ -1,4 +1,4 @@
-module wordle_display (
+module vga_grid (
     input wire clk,              // 25.175 MHz pixel clock
     input wire reset,
     output reg [3:0] vga_r,      // 4-bit red
