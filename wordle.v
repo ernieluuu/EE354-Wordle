@@ -1,9 +1,10 @@
 `timescale 1ns / 1ps
+`default_nettype none
 //////////////////////////////////////////////////////////////////////////////////
 // Author: Ernest Lu
 // Create Date: 11/20/2025
 // File Name: wordle.v 
-// Description: Core Wordle game state machine (Verilog-2001 compatible)
+// Description: Core Wordle game state machine (Vivado-compatible version)
 //////////////////////////////////////////////////////////////////////////////////
 module wordle(
     input wire clk,
@@ -19,14 +20,14 @@ module wordle(
     input wire CENTER,        // Confirm selection
     
     // Game state outputs (for VGA rendering)
-    // The secret word P1 set (5 letters, 5 bits each)
-    output reg [4:0] stored_word_0,
-    output reg [4:0] stored_word_1,
-    output reg [4:0] stored_word_2,
-    output reg [4:0] stored_word_3,
-    output reg [4:0] stored_word_4,
+    // The secret word P1 set
+    output reg [4:0] stored_word0,
+    output reg [4:0] stored_word1,
+    output reg [4:0] stored_word2,
+    output reg [4:0] stored_word3,
+    output reg [4:0] stored_word4,
     
-    // P2's guesses (6 guesses, 5 letters each, 5 bits per letter)
+    // P2's guesses (6 guesses x 5 letters)
     output reg [4:0] guess_1_0, guess_1_1, guess_1_2, guess_1_3, guess_1_4,
     output reg [4:0] guess_2_0, guess_2_1, guess_2_2, guess_2_3, guess_2_4,
     output reg [4:0] guess_3_0, guess_3_1, guess_3_2, guess_3_3, guess_3_4,
@@ -34,24 +35,23 @@ module wordle(
     output reg [4:0] guess_5_0, guess_5_1, guess_5_2, guess_5_3, guess_5_4,
     output reg [4:0] guess_6_0, guess_6_1, guess_6_2, guess_6_3, guess_6_4,
     
-    // Color status for each guess (2 bits per letter)
-    output reg [1:0] g1_status_0, g1_status_1, g1_status_2, g1_status_3, g1_status_4,
-    output reg [1:0] g2_status_0, g2_status_1, g2_status_2, g2_status_3, g2_status_4,
-    output reg [1:0] g3_status_0, g3_status_1, g3_status_2, g3_status_3, g3_status_4,
-    output reg [1:0] g4_status_0, g4_status_1, g4_status_2, g4_status_3, g4_status_4,
-    output reg [1:0] g5_status_0, g5_status_1, g5_status_2, g5_status_3, g5_status_4,
-    output reg [1:0] g6_status_0, g6_status_1, g6_status_2, g6_status_3, g6_status_4,
+    // Color status for each guess (6 guesses x 5 letters x 2 bits)
+    output reg [1:0] g1_status0, g1_status1, g1_status2, g1_status3, g1_status4,
+    output reg [1:0] g2_status0, g2_status1, g2_status2, g2_status3, g2_status4,
+    output reg [1:0] g3_status0, g3_status1, g3_status2, g3_status3, g3_status4,
+    output reg [1:0] g4_status0, g4_status1, g4_status2, g4_status3, g4_status4,
+    output reg [1:0] g5_status0, g5_status1, g5_status2, g5_status3, g5_status4,
+    output reg [1:0] g6_status0, g6_status1, g6_status2, g6_status3, g6_status4,
     
     output reg [2:0] current_guess,          // Which guess (1-6) we're on
     output wire [3:0] game_state,            // Current state for debug/VGA
     output wire [2:0] wf_pos,                // Current letter position (for UI cursor)
-    
     // Current word being edited (for UI display)
-    output wire [4:0] wf_current_word_0,
-    output wire [4:0] wf_current_word_1,
-    output wire [4:0] wf_current_word_2,
-    output wire [4:0] wf_current_word_3,
-    output wire [4:0] wf_current_word_4
+    output wire [4:0] wf_current_word0,
+    output wire [4:0] wf_current_word1,
+    output wire [4:0] wf_current_word2,
+    output wire [4:0] wf_current_word3,
+    output wire [4:0] wf_current_word4
 );
 
     // =========================================================================
@@ -86,7 +86,7 @@ module wordle(
     reg wf_started;              // Flag to track if start pulse was sent
     wire wf_done;
     wire [2:0] wf_pos_out;
-    wire [4:0] wf_word_out_0, wf_word_out_1, wf_word_out_2, wf_word_out_3, wf_word_out_4;
+    wire [4:0] wf_word_out0, wf_word_out1, wf_word_out2, wf_word_out3, wf_word_out4;
     wire q_I_wf, q_Let_wf, q_Pos_wf;
     
     // Compare module control  
@@ -94,23 +94,20 @@ module wordle(
     reg cmp_reset;
     reg cmp_started;             // Flag to track if start pulse was sent
     wire cmp_done;
-    wire [1:0] cmp_word_status_0, cmp_word_status_1, cmp_word_status_2, cmp_word_status_3, cmp_word_status_4;
+    wire [1:0] cmp_word_status0, cmp_word_status1, cmp_word_status2, cmp_word_status3, cmp_word_status4;
     wire q_I_cmp, q_Green_cmp, q_YorG_cmp;
     
     // Internal guess storage for compare module
-    reg [4:0] current_guess_word_0;
-    reg [4:0] current_guess_word_1;
-    reg [4:0] current_guess_word_2;
-    reg [4:0] current_guess_word_3;
-    reg [4:0] current_guess_word_4;
+    reg [4:0] current_guess_word0, current_guess_word1, current_guess_word2;
+    reg [4:0] current_guess_word3, current_guess_word4;
     
     // Flag to detect all green (win condition)
     wire all_green;
-    assign all_green = (cmp_word_status_0 == GREEN) && 
-                       (cmp_word_status_1 == GREEN) && 
-                       (cmp_word_status_2 == GREEN) && 
-                       (cmp_word_status_3 == GREEN) && 
-                       (cmp_word_status_4 == GREEN);
+    assign all_green = (cmp_word_status0 == GREEN) && 
+                       (cmp_word_status1 == GREEN) && 
+                       (cmp_word_status2 == GREEN) && 
+                       (cmp_word_status3 == GREEN) && 
+                       (cmp_word_status4 == GREEN);
 
     // =========================================================================
     // Module Instantiations
@@ -130,38 +127,36 @@ module wordle(
         .q_Let(q_Let_wf),
         .q_Pos(q_Pos_wf),
         .pos(wf_pos_out),
-        .word_0(wf_word_out_0),
-        .word_1(wf_word_out_1),
-        .word_2(wf_word_out_2),
-        .word_3(wf_word_out_3),
-        .word_4(wf_word_out_4),
+        .word_array0(wf_word_out0),
+        .word_array1(wf_word_out1),
+        .word_array2(wf_word_out2),
+        .word_array3(wf_word_out3),
+        .word_array4(wf_word_out4),
         .DONE(wf_done)
     );
     
     compare cmp_inst (
         .Clk(clk),
-        .SCEN(SCEN),
         .RESET(cmp_reset),
-        .CENTER(CENTER),
         .Start(cmp_start),
-        .guess_0(current_guess_word_0),
-        .guess_1(current_guess_word_1),
-        .guess_2(current_guess_word_2),
-        .guess_3(current_guess_word_3),
-        .guess_4(current_guess_word_4),
-        .answer_0(stored_word_0),
-        .answer_1(stored_word_1),
-        .answer_2(stored_word_2),
-        .answer_3(stored_word_3),
-        .answer_4(stored_word_4),
+        .guess0(current_guess_word0),
+        .guess1(current_guess_word1),
+        .guess2(current_guess_word2),
+        .guess3(current_guess_word3),
+        .guess4(current_guess_word4),
+        .answer0(stored_word0),
+        .answer1(stored_word1),
+        .answer2(stored_word2),
+        .answer3(stored_word3),
+        .answer4(stored_word4),
         .q_I(q_I_cmp),
         .q_Green(q_Green_cmp),
         .q_YorG(q_YorG_cmp),
-        .word_status_0(cmp_word_status_0),
-        .word_status_1(cmp_word_status_1),
-        .word_status_2(cmp_word_status_2),
-        .word_status_3(cmp_word_status_3),
-        .word_status_4(cmp_word_status_4),
+        .word_status0(cmp_word_status0),
+        .word_status1(cmp_word_status1),
+        .word_status2(cmp_word_status2),
+        .word_status3(cmp_word_status3),
+        .word_status4(cmp_word_status4),
         .cmp_done(cmp_done)
     );
 
@@ -169,11 +164,11 @@ module wordle(
     // Pass-through outputs for VGA
     // =========================================================================
     assign wf_pos = wf_pos_out;
-    assign wf_current_word_0 = wf_word_out_0;
-    assign wf_current_word_1 = wf_word_out_1;
-    assign wf_current_word_2 = wf_word_out_2;
-    assign wf_current_word_3 = wf_word_out_3;
-    assign wf_current_word_4 = wf_word_out_4;
+    assign wf_current_word0 = wf_word_out0;
+    assign wf_current_word1 = wf_word_out1;
+    assign wf_current_word2 = wf_word_out2;
+    assign wf_current_word3 = wf_word_out3;
+    assign wf_current_word4 = wf_word_out4;
     assign game_state = state;
 
     // =========================================================================
@@ -185,11 +180,8 @@ module wordle(
             current_guess <= 3'd1;
             
             // Reset all stored data
-            stored_word_0 <= 5'd0;
-            stored_word_1 <= 5'd0;
-            stored_word_2 <= 5'd0;
-            stored_word_3 <= 5'd0;
-            stored_word_4 <= 5'd0;
+            stored_word0 <= 5'd0; stored_word1 <= 5'd0; stored_word2 <= 5'd0;
+            stored_word3 <= 5'd0; stored_word4 <= 5'd0;
             
             guess_1_0 <= 5'd0; guess_1_1 <= 5'd0; guess_1_2 <= 5'd0;
             guess_1_3 <= 5'd0; guess_1_4 <= 5'd0;
@@ -204,18 +196,18 @@ module wordle(
             guess_6_0 <= 5'd0; guess_6_1 <= 5'd0; guess_6_2 <= 5'd0;
             guess_6_3 <= 5'd0; guess_6_4 <= 5'd0;
             
-            g1_status_0 <= UNCHECKED; g1_status_1 <= UNCHECKED; g1_status_2 <= UNCHECKED;
-            g1_status_3 <= UNCHECKED; g1_status_4 <= UNCHECKED;
-            g2_status_0 <= UNCHECKED; g2_status_1 <= UNCHECKED; g2_status_2 <= UNCHECKED;
-            g2_status_3 <= UNCHECKED; g2_status_4 <= UNCHECKED;
-            g3_status_0 <= UNCHECKED; g3_status_1 <= UNCHECKED; g3_status_2 <= UNCHECKED;
-            g3_status_3 <= UNCHECKED; g3_status_4 <= UNCHECKED;
-            g4_status_0 <= UNCHECKED; g4_status_1 <= UNCHECKED; g4_status_2 <= UNCHECKED;
-            g4_status_3 <= UNCHECKED; g4_status_4 <= UNCHECKED;
-            g5_status_0 <= UNCHECKED; g5_status_1 <= UNCHECKED; g5_status_2 <= UNCHECKED;
-            g5_status_3 <= UNCHECKED; g5_status_4 <= UNCHECKED;
-            g6_status_0 <= UNCHECKED; g6_status_1 <= UNCHECKED; g6_status_2 <= UNCHECKED;
-            g6_status_3 <= UNCHECKED; g6_status_4 <= UNCHECKED;
+            g1_status0 <= UNCHECKED; g1_status1 <= UNCHECKED; g1_status2 <= UNCHECKED;
+            g1_status3 <= UNCHECKED; g1_status4 <= UNCHECKED;
+            g2_status0 <= UNCHECKED; g2_status1 <= UNCHECKED; g2_status2 <= UNCHECKED;
+            g2_status3 <= UNCHECKED; g2_status4 <= UNCHECKED;
+            g3_status0 <= UNCHECKED; g3_status1 <= UNCHECKED; g3_status2 <= UNCHECKED;
+            g3_status3 <= UNCHECKED; g3_status4 <= UNCHECKED;
+            g4_status0 <= UNCHECKED; g4_status1 <= UNCHECKED; g4_status2 <= UNCHECKED;
+            g4_status3 <= UNCHECKED; g4_status4 <= UNCHECKED;
+            g5_status0 <= UNCHECKED; g5_status1 <= UNCHECKED; g5_status2 <= UNCHECKED;
+            g5_status3 <= UNCHECKED; g5_status4 <= UNCHECKED;
+            g6_status0 <= UNCHECKED; g6_status1 <= UNCHECKED; g6_status2 <= UNCHECKED;
+            g6_status3 <= UNCHECKED; g6_status4 <= UNCHECKED;
             
             // Reset module controls
             wf_reset <= 1'b1;
@@ -226,11 +218,11 @@ module wordle(
             cmp_started <= 1'b0;
             
             // Reset internal guess word
-            current_guess_word_0 <= 5'd0;
-            current_guess_word_1 <= 5'd0;
-            current_guess_word_2 <= 5'd0;
-            current_guess_word_3 <= 5'd0;
-            current_guess_word_4 <= 5'd0;
+            current_guess_word0 <= 5'd0;
+            current_guess_word1 <= 5'd0;
+            current_guess_word2 <= 5'd0;
+            current_guess_word3 <= 5'd0;
+            current_guess_word4 <= 5'd0;
         end
         else begin
             // Default: deassert one-shot signals
@@ -266,11 +258,11 @@ module wordle(
                     
                     if (wf_done) begin
                         // Capture the word P1 set
-                        stored_word_0 <= wf_word_out_0;
-                        stored_word_1 <= wf_word_out_1;
-                        stored_word_2 <= wf_word_out_2;
-                        stored_word_3 <= wf_word_out_3;
-                        stored_word_4 <= wf_word_out_4;
+                        stored_word0 <= wf_word_out0;
+                        stored_word1 <= wf_word_out1;
+                        stored_word2 <= wf_word_out2;
+                        stored_word3 <= wf_word_out3;
+                        stored_word4 <= wf_word_out4;
                         
                         // Go to reset state before P2's turn
                         state <= RESET_WF_1;
@@ -303,45 +295,44 @@ module wordle(
                     
                     if (wf_done) begin
                         // Capture current guess into internal register for compare
-                        current_guess_word_0 <= wf_word_out_0;
-                        current_guess_word_1 <= wf_word_out_1;
-                        current_guess_word_2 <= wf_word_out_2;
-                        current_guess_word_3 <= wf_word_out_3;
-                        current_guess_word_4 <= wf_word_out_4;
+                        current_guess_word0 <= wf_word_out0;
+                        current_guess_word1 <= wf_word_out1;
+                        current_guess_word2 <= wf_word_out2;
+                        current_guess_word3 <= wf_word_out3;
+                        current_guess_word4 <= wf_word_out4;
                         
                         // Store in the appropriate guess register for VGA display
                         case (current_guess)
                             3'd1: begin
-                                guess_1_0 <= wf_word_out_0; guess_1_1 <= wf_word_out_1;
-                                guess_1_2 <= wf_word_out_2; guess_1_3 <= wf_word_out_3;
-                                guess_1_4 <= wf_word_out_4;
+                                guess_1_0 <= wf_word_out0; guess_1_1 <= wf_word_out1;
+                                guess_1_2 <= wf_word_out2; guess_1_3 <= wf_word_out3;
+                                guess_1_4 <= wf_word_out4;
                             end
                             3'd2: begin
-                                guess_2_0 <= wf_word_out_0; guess_2_1 <= wf_word_out_1;
-                                guess_2_2 <= wf_word_out_2; guess_2_3 <= wf_word_out_3;
-                                guess_2_4 <= wf_word_out_4;
+                                guess_2_0 <= wf_word_out0; guess_2_1 <= wf_word_out1;
+                                guess_2_2 <= wf_word_out2; guess_2_3 <= wf_word_out3;
+                                guess_2_4 <= wf_word_out4;
                             end
                             3'd3: begin
-                                guess_3_0 <= wf_word_out_0; guess_3_1 <= wf_word_out_1;
-                                guess_3_2 <= wf_word_out_2; guess_3_3 <= wf_word_out_3;
-                                guess_3_4 <= wf_word_out_4;
+                                guess_3_0 <= wf_word_out0; guess_3_1 <= wf_word_out1;
+                                guess_3_2 <= wf_word_out2; guess_3_3 <= wf_word_out3;
+                                guess_3_4 <= wf_word_out4;
                             end
                             3'd4: begin
-                                guess_4_0 <= wf_word_out_0; guess_4_1 <= wf_word_out_1;
-                                guess_4_2 <= wf_word_out_2; guess_4_3 <= wf_word_out_3;
-                                guess_4_4 <= wf_word_out_4;
+                                guess_4_0 <= wf_word_out0; guess_4_1 <= wf_word_out1;
+                                guess_4_2 <= wf_word_out2; guess_4_3 <= wf_word_out3;
+                                guess_4_4 <= wf_word_out4;
                             end
                             3'd5: begin
-                                guess_5_0 <= wf_word_out_0; guess_5_1 <= wf_word_out_1;
-                                guess_5_2 <= wf_word_out_2; guess_5_3 <= wf_word_out_3;
-                                guess_5_4 <= wf_word_out_4;
+                                guess_5_0 <= wf_word_out0; guess_5_1 <= wf_word_out1;
+                                guess_5_2 <= wf_word_out2; guess_5_3 <= wf_word_out3;
+                                guess_5_4 <= wf_word_out4;
                             end
                             3'd6: begin
-                                guess_6_0 <= wf_word_out_0; guess_6_1 <= wf_word_out_1;
-                                guess_6_2 <= wf_word_out_2; guess_6_3 <= wf_word_out_3;
-                                guess_6_4 <= wf_word_out_4;
+                                guess_6_0 <= wf_word_out0; guess_6_1 <= wf_word_out1;
+                                guess_6_2 <= wf_word_out2; guess_6_3 <= wf_word_out3;
+                                guess_6_4 <= wf_word_out4;
                             end
-                            default: ; // Do nothing
                         endcase
                         
                         // Go to reset compare state before comparison
@@ -376,48 +367,47 @@ module wordle(
                         // Store the comparison results in appropriate status register
                         case (current_guess)
                             3'd1: begin
-                                g1_status_0 <= cmp_word_status_0;
-                                g1_status_1 <= cmp_word_status_1;
-                                g1_status_2 <= cmp_word_status_2;
-                                g1_status_3 <= cmp_word_status_3;
-                                g1_status_4 <= cmp_word_status_4;
+                                g1_status0 <= cmp_word_status0;
+                                g1_status1 <= cmp_word_status1;
+                                g1_status2 <= cmp_word_status2;
+                                g1_status3 <= cmp_word_status3;
+                                g1_status4 <= cmp_word_status4;
                             end
                             3'd2: begin
-                                g2_status_0 <= cmp_word_status_0;
-                                g2_status_1 <= cmp_word_status_1;
-                                g2_status_2 <= cmp_word_status_2;
-                                g2_status_3 <= cmp_word_status_3;
-                                g2_status_4 <= cmp_word_status_4;
+                                g2_status0 <= cmp_word_status0;
+                                g2_status1 <= cmp_word_status1;
+                                g2_status2 <= cmp_word_status2;
+                                g2_status3 <= cmp_word_status3;
+                                g2_status4 <= cmp_word_status4;
                             end
                             3'd3: begin
-                                g3_status_0 <= cmp_word_status_0;
-                                g3_status_1 <= cmp_word_status_1;
-                                g3_status_2 <= cmp_word_status_2;
-                                g3_status_3 <= cmp_word_status_3;
-                                g3_status_4 <= cmp_word_status_4;
+                                g3_status0 <= cmp_word_status0;
+                                g3_status1 <= cmp_word_status1;
+                                g3_status2 <= cmp_word_status2;
+                                g3_status3 <= cmp_word_status3;
+                                g3_status4 <= cmp_word_status4;
                             end
                             3'd4: begin
-                                g4_status_0 <= cmp_word_status_0;
-                                g4_status_1 <= cmp_word_status_1;
-                                g4_status_2 <= cmp_word_status_2;
-                                g4_status_3 <= cmp_word_status_3;
-                                g4_status_4 <= cmp_word_status_4;
+                                g4_status0 <= cmp_word_status0;
+                                g4_status1 <= cmp_word_status1;
+                                g4_status2 <= cmp_word_status2;
+                                g4_status3 <= cmp_word_status3;
+                                g4_status4 <= cmp_word_status4;
                             end
                             3'd5: begin
-                                g5_status_0 <= cmp_word_status_0;
-                                g5_status_1 <= cmp_word_status_1;
-                                g5_status_2 <= cmp_word_status_2;
-                                g5_status_3 <= cmp_word_status_3;
-                                g5_status_4 <= cmp_word_status_4;
+                                g5_status0 <= cmp_word_status0;
+                                g5_status1 <= cmp_word_status1;
+                                g5_status2 <= cmp_word_status2;
+                                g5_status3 <= cmp_word_status3;
+                                g5_status4 <= cmp_word_status4;
                             end
                             3'd6: begin
-                                g6_status_0 <= cmp_word_status_0;
-                                g6_status_1 <= cmp_word_status_1;
-                                g6_status_2 <= cmp_word_status_2;
-                                g6_status_3 <= cmp_word_status_3;
-                                g6_status_4 <= cmp_word_status_4;
+                                g6_status0 <= cmp_word_status0;
+                                g6_status1 <= cmp_word_status1;
+                                g6_status2 <= cmp_word_status2;
+                                g6_status3 <= cmp_word_status3;
+                                g6_status4 <= cmp_word_status4;
                             end
-                            default: ; // Do nothing
                         endcase
                         
                         // Check win/lose conditions
@@ -473,18 +463,18 @@ module wordle(
                         guess_6_3 <= 5'd0; guess_6_4 <= 5'd0;
                         
                         // Clear all statuses
-                        g1_status_0 <= UNCHECKED; g1_status_1 <= UNCHECKED; g1_status_2 <= UNCHECKED;
-                        g1_status_3 <= UNCHECKED; g1_status_4 <= UNCHECKED;
-                        g2_status_0 <= UNCHECKED; g2_status_1 <= UNCHECKED; g2_status_2 <= UNCHECKED;
-                        g2_status_3 <= UNCHECKED; g2_status_4 <= UNCHECKED;
-                        g3_status_0 <= UNCHECKED; g3_status_1 <= UNCHECKED; g3_status_2 <= UNCHECKED;
-                        g3_status_3 <= UNCHECKED; g3_status_4 <= UNCHECKED;
-                        g4_status_0 <= UNCHECKED; g4_status_1 <= UNCHECKED; g4_status_2 <= UNCHECKED;
-                        g4_status_3 <= UNCHECKED; g4_status_4 <= UNCHECKED;
-                        g5_status_0 <= UNCHECKED; g5_status_1 <= UNCHECKED; g5_status_2 <= UNCHECKED;
-                        g5_status_3 <= UNCHECKED; g5_status_4 <= UNCHECKED;
-                        g6_status_0 <= UNCHECKED; g6_status_1 <= UNCHECKED; g6_status_2 <= UNCHECKED;
-                        g6_status_3 <= UNCHECKED; g6_status_4 <= UNCHECKED;
+                        g1_status0 <= UNCHECKED; g1_status1 <= UNCHECKED; g1_status2 <= UNCHECKED;
+                        g1_status3 <= UNCHECKED; g1_status4 <= UNCHECKED;
+                        g2_status0 <= UNCHECKED; g2_status1 <= UNCHECKED; g2_status2 <= UNCHECKED;
+                        g2_status3 <= UNCHECKED; g2_status4 <= UNCHECKED;
+                        g3_status0 <= UNCHECKED; g3_status1 <= UNCHECKED; g3_status2 <= UNCHECKED;
+                        g3_status3 <= UNCHECKED; g3_status4 <= UNCHECKED;
+                        g4_status0 <= UNCHECKED; g4_status1 <= UNCHECKED; g4_status2 <= UNCHECKED;
+                        g4_status3 <= UNCHECKED; g4_status4 <= UNCHECKED;
+                        g5_status0 <= UNCHECKED; g5_status1 <= UNCHECKED; g5_status2 <= UNCHECKED;
+                        g5_status3 <= UNCHECKED; g5_status4 <= UNCHECKED;
+                        g6_status0 <= UNCHECKED; g6_status1 <= UNCHECKED; g6_status2 <= UNCHECKED;
+                        g6_status3 <= UNCHECKED; g6_status4 <= UNCHECKED;
                     end
                 end
                 
@@ -516,18 +506,18 @@ module wordle(
                         guess_6_3 <= 5'd0; guess_6_4 <= 5'd0;
                         
                         // Clear all statuses
-                        g1_status_0 <= UNCHECKED; g1_status_1 <= UNCHECKED; g1_status_2 <= UNCHECKED;
-                        g1_status_3 <= UNCHECKED; g1_status_4 <= UNCHECKED;
-                        g2_status_0 <= UNCHECKED; g2_status_1 <= UNCHECKED; g2_status_2 <= UNCHECKED;
-                        g2_status_3 <= UNCHECKED; g2_status_4 <= UNCHECKED;
-                        g3_status_0 <= UNCHECKED; g3_status_1 <= UNCHECKED; g3_status_2 <= UNCHECKED;
-                        g3_status_3 <= UNCHECKED; g3_status_4 <= UNCHECKED;
-                        g4_status_0 <= UNCHECKED; g4_status_1 <= UNCHECKED; g4_status_2 <= UNCHECKED;
-                        g4_status_3 <= UNCHECKED; g4_status_4 <= UNCHECKED;
-                        g5_status_0 <= UNCHECKED; g5_status_1 <= UNCHECKED; g5_status_2 <= UNCHECKED;
-                        g5_status_3 <= UNCHECKED; g5_status_4 <= UNCHECKED;
-                        g6_status_0 <= UNCHECKED; g6_status_1 <= UNCHECKED; g6_status_2 <= UNCHECKED;
-                        g6_status_3 <= UNCHECKED; g6_status_4 <= UNCHECKED;
+                        g1_status0 <= UNCHECKED; g1_status1 <= UNCHECKED; g1_status2 <= UNCHECKED;
+                        g1_status3 <= UNCHECKED; g1_status4 <= UNCHECKED;
+                        g2_status0 <= UNCHECKED; g2_status1 <= UNCHECKED; g2_status2 <= UNCHECKED;
+                        g2_status3 <= UNCHECKED; g2_status4 <= UNCHECKED;
+                        g3_status0 <= UNCHECKED; g3_status1 <= UNCHECKED; g3_status2 <= UNCHECKED;
+                        g3_status3 <= UNCHECKED; g3_status4 <= UNCHECKED;
+                        g4_status0 <= UNCHECKED; g4_status1 <= UNCHECKED; g4_status2 <= UNCHECKED;
+                        g4_status3 <= UNCHECKED; g4_status4 <= UNCHECKED;
+                        g5_status0 <= UNCHECKED; g5_status1 <= UNCHECKED; g5_status2 <= UNCHECKED;
+                        g5_status3 <= UNCHECKED; g5_status4 <= UNCHECKED;
+                        g6_status0 <= UNCHECKED; g6_status1 <= UNCHECKED; g6_status2 <= UNCHECKED;
+                        g6_status3 <= UNCHECKED; g6_status4 <= UNCHECKED;
                     end
                 end
                 
