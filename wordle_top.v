@@ -15,22 +15,30 @@ module wordle_top(
     // input wire reset_btn,       // Reset button (active high), defined as Sw0 in XDC
 
     // Game Control Buttons (raw inputs from FPGA buttons)
-    input wire start_btn,       // Start game button
-    input wire up_btn,          // UP navigation
-    input wire down_btn,        // DOWN navigation
-    input wire left_btn,        // LEFT navigation
-    input wire right_btn,       // RIGHT navigation
-    input wire center_btn,      // CENTER/Confirm button
+    // input wire start_btn,       // Start game button
+    input wire BtnU,          // UP navigation
+    input wire BtnD,        // DOWN navigation
+    input wire BtnL,        // LEFT navigation
+    input wire BtnR,       // RIGHT navigation
+    input wire BtnC,      // CENTER/Confirm button
 	
-	input wire Ld7,
-	input wire Ld6,
-	input wire Ld5,
-	input wire Ld4,
-	input wire Ld3,
-	input wire Ld2,
-	input wire Ld1,
-	input wire Ld0,
-	
+	//output wire Ld7,
+	//output wire Ld6,
+
+	// LED outputs for game status display
+	output wire Ld13,
+	output wire Ld12,
+	output wire Ld11,
+	output wire Ld10,
+	output wire Ld9,
+	output wire Ld8,
+	output wire Ld5,
+	output wire Ld4,
+	output wire Ld3,
+	output wire Ld2,
+	output wire Ld1,
+	output wire Ld0,
+
 	input wire Sw0, // for reset
 	
 	// SSD Anodes
@@ -50,7 +58,8 @@ module wordle_top(
 	output wire Cd,
 	output wire Ce,
 	output wire Cf,
-	output wire Cg
+	output wire Cg,
+	output wire Dp
 
     // VGA Outputs (for future use - commented out for now)
     // output wire [3:0] vga_r,
@@ -72,35 +81,42 @@ module wordle_top(
     // Generated at ~70Hz for smooth button response
     wire SCEN;
 
-    // Game state outputs from wordle module
-    wire [4:0] stored_word [0:4];       // Secret word set by P1
+    // Game state outputs from wordle module (flat wires to match wordle.v outputs)
+    wire [4:0] stored_word0, stored_word1, stored_word2, stored_word3, stored_word4;
 
-    wire [4:0] guess_1 [0:4];           // All 6 guesses from P2
-    wire [4:0] guess_2 [0:4];
-    wire [4:0] guess_3 [0:4];
-    wire [4:0] guess_4 [0:4];
-    wire [4:0] guess_5 [0:4];
-    wire [4:0] guess_6 [0:4];
+    wire [4:0] guess_1_0, guess_1_1, guess_1_2, guess_1_3, guess_1_4;
+    wire [4:0] guess_2_0, guess_2_1, guess_2_2, guess_2_3, guess_2_4;
+    wire [4:0] guess_3_0, guess_3_1, guess_3_2, guess_3_3, guess_3_4;
+    wire [4:0] guess_4_0, guess_4_1, guess_4_2, guess_4_3, guess_4_4;
+    wire [4:0] guess_5_0, guess_5_1, guess_5_2, guess_5_3, guess_5_4;
+    wire [4:0] guess_6_0, guess_6_1, guess_6_2, guess_6_3, guess_6_4;
 
-    wire [1:0] g1_status [0:4];         // Color status for each guess
-    wire [1:0] g2_status [0:4];         // (00=unchecked, 01=green, 10=yellow, 11=gray)
-    wire [1:0] g3_status [0:4];
-    wire [1:0] g4_status [0:4];
-    wire [1:0] g5_status [0:4];
-    wire [1:0] g6_status [0:4];
+    wire [1:0] g1_status0, g1_status1, g1_status2, g1_status3, g1_status4;
+    wire [1:0] g2_status0, g2_status1, g2_status2, g2_status3, g2_status4;
+    wire [1:0] g3_status0, g3_status1, g3_status2, g3_status3, g3_status4;
+    wire [1:0] g4_status0, g4_status1, g4_status2, g4_status3, g4_status4;
+    wire [1:0] g5_status0, g5_status1, g5_status2, g5_status3, g5_status4;
+    wire [1:0] g6_status0, g6_status1, g6_status2, g6_status3, g6_status4;
 
     wire [2:0] current_guess;           // Current guess number (1-6)
     wire [3:0] game_state;              // Current state of game FSM
     wire [2:0] wf_pos;                  // Current letter position being edited
-    wire [4:0] wf_current_word [0:4];   // Current word being edited in UI
+    wire [4:0] wf_current_word0, wf_current_word1, wf_current_word2, wf_current_word3, wf_current_word4;
 	
 	// SSD signals
+	reg [31:0] DIV_CLK;
 	wire [2:0] ssdscan_clk;
 	wire [4:0] SSD7, SSD6, SSD5, SSD4, SSD3;
-	wire [3:0] SSD0
-	
+	wire [4:0] SSD0;
+	reg [4:0] SSD;
+	reg [6:0] SSD_CATHODES;
+
 	// RESET BTN
 	wire reset_btn = Sw0;
+
+	// Start Btn
+	// FIXME: may cause issues w/ SCEN, since it is a switch, not a button
+	wire start_btn = Sw1;
 
     // =========================================================================
     // Clock Generation for Button Debouncing
@@ -112,9 +128,20 @@ module wordle_top(
         .max_count(714_285)             // 70 Hz clock enable
     ) scen_generator (
         .clk_in(clk_100mhz),
-        .rst_l(reset_btn),             // Active low reset (invert reset_btn)
+        .rst_l(~reset_btn),             // Active low reset (invert reset_btn)
         .clk_out(SCEN)
     );
+
+    // =========================================================================
+    // Clock Divider for SSD Scanning
+    // =========================================================================
+    // Generate divided clock for SSD scanning (bits 20:18 used for 8-display scan)
+    always @(posedge clk_100mhz or posedge reset_btn) begin
+        if (reset_btn)
+            DIV_CLK <= 0;
+        else
+            DIV_CLK <= DIV_CLK + 1;
+    end
 
     // =========================================================================
     // Wordle Game Controller Instantiation
@@ -127,33 +154,35 @@ module wordle_top(
         // Button inputs (with clock enable for debouncing)
         .SCEN(SCEN),
         .Start(start_btn),
-        .UP(up_btn),
-        .DOWN(down_btn),
-        .LEFT(left_btn),
-        .RIGHT(right_btn),
-        .CENTER(center_btn),
+        .UP(BtnU),
+        .DOWN(BtnD),
+        .LEFT(BtnL),
+        .RIGHT(BtnR),
+        .CENTER(BtnC),
 
         // Game state outputs (connect to VGA module in future)
-        .stored_word(stored_word),
+        .stored_word0(stored_word0), .stored_word1(stored_word1), .stored_word2(stored_word2),
+        .stored_word3(stored_word3), .stored_word4(stored_word4),
 
-        .guess_1(guess_1),
-        .guess_2(guess_2),
-        .guess_3(guess_3),
-        .guess_4(guess_4),
-        .guess_5(guess_5),
-        .guess_6(guess_6),
+        .guess_1_0(guess_1_0), .guess_1_1(guess_1_1), .guess_1_2(guess_1_2), .guess_1_3(guess_1_3), .guess_1_4(guess_1_4),
+        .guess_2_0(guess_2_0), .guess_2_1(guess_2_1), .guess_2_2(guess_2_2), .guess_2_3(guess_2_3), .guess_2_4(guess_2_4),
+        .guess_3_0(guess_3_0), .guess_3_1(guess_3_1), .guess_3_2(guess_3_2), .guess_3_3(guess_3_3), .guess_3_4(guess_3_4),
+        .guess_4_0(guess_4_0), .guess_4_1(guess_4_1), .guess_4_2(guess_4_2), .guess_4_3(guess_4_3), .guess_4_4(guess_4_4),
+        .guess_5_0(guess_5_0), .guess_5_1(guess_5_1), .guess_5_2(guess_5_2), .guess_5_3(guess_5_3), .guess_5_4(guess_5_4),
+        .guess_6_0(guess_6_0), .guess_6_1(guess_6_1), .guess_6_2(guess_6_2), .guess_6_3(guess_6_3), .guess_6_4(guess_6_4),
 
-        .g1_status(g1_status),
-        .g2_status(g2_status),
-        .g3_status(g3_status),
-        .g4_status(g4_status),
-        .g5_status(g5_status),
-        .g6_status(g6_status),
+        .g1_status0(g1_status0), .g1_status1(g1_status1), .g1_status2(g1_status2), .g1_status3(g1_status3), .g1_status4(g1_status4),
+        .g2_status0(g2_status0), .g2_status1(g2_status1), .g2_status2(g2_status2), .g2_status3(g2_status3), .g2_status4(g2_status4),
+        .g3_status0(g3_status0), .g3_status1(g3_status1), .g3_status2(g3_status2), .g3_status3(g3_status3), .g3_status4(g3_status4),
+        .g4_status0(g4_status0), .g4_status1(g4_status1), .g4_status2(g4_status2), .g4_status3(g4_status3), .g4_status4(g4_status4),
+        .g5_status0(g5_status0), .g5_status1(g5_status1), .g5_status2(g5_status2), .g5_status3(g5_status3), .g5_status4(g5_status4),
+        .g6_status0(g6_status0), .g6_status1(g6_status1), .g6_status2(g6_status2), .g6_status3(g6_status3), .g6_status4(g6_status4),
 
         .current_guess(current_guess),
         .game_state(game_state),
         .wf_pos(wf_pos),
-        .wf_current_word(wf_current_word)
+        .wf_current_word0(wf_current_word0), .wf_current_word1(wf_current_word1), .wf_current_word2(wf_current_word2),
+        .wf_current_word3(wf_current_word3), .wf_current_word4(wf_current_word4)
     );
 
     // =========================================================================
@@ -212,39 +241,39 @@ module wordle_top(
 	// Check if each letter position has GREEN status across all guesses
 	reg [4:0] green_leds;  // One bit for each of the 6 LEDs (LED8-LED13)
 
-	always @ (g1_status[0], g1_status[1], g1_status[2], g1_status[3], g1_status[4],
-			  g2_status[0], g2_status[1], g2_status[2], g2_status[3], g2_status[4],
-			  g3_status[0], g3_status[1], g3_status[2], g3_status[3], g3_status[4],
-			  g4_status[0], g4_status[1], g4_status[2], g4_status[3], g4_status[4],
-			  g5_status[0], g5_status[1], g5_status[2], g5_status[3], g5_status[4],
-			  g6_status[0], g6_status[1], g6_status[2], g6_status[3], g6_status[4]) 
+	always @ (g1_status0, g1_status1, g1_status2, g1_status3, g1_status4,
+			  g2_status0, g2_status1, g2_status2, g2_status3, g2_status4,
+			  g3_status0, g3_status1, g3_status2, g3_status3, g3_status4,
+			  g4_status0, g4_status1, g4_status2, g4_status3, g4_status4,
+			  g5_status0, g5_status1, g5_status2, g5_status3, g5_status4,
+			  g6_status0, g6_status1, g6_status2, g6_status3, g6_status4)
     begin
-		
+
 		// LED8 (position 0): Check if ANY guess has green in position 0
-		green_leds[0] = (g1_status[0] == 2'b01) || (g2_status[0] == 2'b01) || 
-						(g3_status[0] == 2'b01) || (g4_status[0] == 2'b01) || 
-						(g5_status[0] == 2'b01) || (g6_status[0] == 2'b01);
-		
+		green_leds[0] = (g1_status0 == 2'b01) || (g2_status0 == 2'b01) ||
+						(g3_status0 == 2'b01) || (g4_status0 == 2'b01) ||
+						(g5_status0 == 2'b01) || (g6_status0 == 2'b01);
+
 		// LED9 (position 1)
-		green_leds[1] = (g1_status[1] == 2'b01) || (g2_status[1] == 2'b01) || 
-						(g3_status[1] == 2'b01) || (g4_status[1] == 2'b01) || 
-						(g5_status[1] == 2'b01) || (g6_status[1] == 2'b01);
-		
+		green_leds[1] = (g1_status1 == 2'b01) || (g2_status1 == 2'b01) ||
+						(g3_status1 == 2'b01) || (g4_status1 == 2'b01) ||
+						(g5_status1 == 2'b01) || (g6_status1 == 2'b01);
+
 		// LED10 (position 2)
-		green_leds[2] = (g1_status[2] == 2'b01) || (g2_status[2] == 2'b01) || 
-						(g3_status[2] == 2'b01) || (g4_status[2] == 2'b01) || 
-						(g5_status[2] == 2'b01) || (g6_status[2] == 2'b01);
-		
+		green_leds[2] = (g1_status2 == 2'b01) || (g2_status2 == 2'b01) ||
+						(g3_status2 == 2'b01) || (g4_status2 == 2'b01) ||
+						(g5_status2 == 2'b01) || (g6_status2 == 2'b01);
+
 		// LED11 (position 3)
-		green_leds[3] = (g1_status[3] == 2'b01) || (g2_status[3] == 2'b01) || 
-						(g3_status[3] == 2'b01) || (g4_status[3] == 2'b01) || 
-						(g5_status[3] == 2'b01) || (g6_status[3] == 2'b01);
-		
+		green_leds[3] = (g1_status3 == 2'b01) || (g2_status3 == 2'b01) ||
+						(g3_status3 == 2'b01) || (g4_status3 == 2'b01) ||
+						(g5_status3 == 2'b01) || (g6_status3 == 2'b01);
+
 		// LED12 (position 4)
-		green_leds[4] = (g1_status[4] == 2'b01) || (g2_status[4] == 2'b01) || 
-						(g3_status[4] == 2'b01) || (g4_status[4] == 2'b01) || 
-						(g5_status[4] == 2'b01) || (g6_status[4] == 2'b01);
-		
+		green_leds[4] = (g1_status4 == 2'b01) || (g2_status4 == 2'b01) ||
+						(g3_status4 == 2'b01) || (g4_status4 == 2'b01) ||
+						(g5_status4 == 2'b01) || (g6_status4 == 2'b01);
+
 	end
 
 	// Assign to actual LED outputs
@@ -253,11 +282,11 @@ module wordle_top(
 	// =========================================================================
     // SSD controls
     // =========================================================================
-	assign SSD7 = wf_current_word[0];  // First letter (leftmost)
-	assign SSD6 = wf_current_word[1];  // Second letter
-	assign SSD5 = wf_current_word[2];  // Third letter
-	assign SSD4 = wf_current_word[3];  // Fourth letter
-	assign SSD3 = wf_current_word[4];  // Fifth letter
+	assign SSD7 = wf_current_word0;  // First letter (leftmost)
+	assign SSD6 = wf_current_word1;  // Second letter
+	assign SSD5 = wf_current_word2;  // Third letter
+	assign SSD4 = wf_current_word3;  // Fourth letter
+	assign SSD3 = wf_current_word4;  // Fifth letter
 
 	reg [4:0] SSD0_display;
 
@@ -305,75 +334,75 @@ module wordle_top(
 	reg dp_yellow;
 
 	always @ (ssdscan_clk,
-			  g1_status[0], g1_status[1], g1_status[2], g1_status[3], g1_status[4],
-			  g2_status[0], g2_status[1], g2_status[2], g2_status[3], g2_status[4],
-			  g3_status[0], g3_status[1], g3_status[2], g3_status[3], g3_status[4],
-			  g4_status[0], g4_status[1], g4_status[2], g4_status[3], g4_status[4],
-			  g5_status[0], g5_status[1], g5_status[2], g5_status[3], g5_status[4],
-			  g6_status[0], g6_status[1], g6_status[2], g6_status[3], g6_status[4],
+			  g1_status0, g1_status1, g1_status2, g1_status3, g1_status4,
+			  g2_status0, g2_status1, g2_status2, g2_status3, g2_status4,
+			  g3_status0, g3_status1, g3_status2, g3_status3, g3_status4,
+			  g4_status0, g4_status1, g4_status2, g4_status3, g4_status4,
+			  g5_status0, g5_status1, g5_status2, g5_status3, g5_status4,
+			  g6_status0, g6_status1, g6_status2, g6_status3, g6_status4,
 			  current_guess)
 	begin : DP_YELLOW_CHECK
 		case (ssdscan_clk)
 			3'b111: begin // SSD7 showing letter position 0
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status[0] == 2'b10);
-					3'd2: dp_yellow = (g2_status[0] == 2'b10);
-					3'd3: dp_yellow = (g3_status[0] == 2'b10);
-					3'd4: dp_yellow = (g4_status[0] == 2'b10);
-					3'd5: dp_yellow = (g5_status[0] == 2'b10);
-					3'd6: dp_yellow = (g6_status[0] == 2'b10);
+					3'd1: dp_yellow = (g1_status0 == 2'b10);
+					3'd2: dp_yellow = (g2_status0 == 2'b10);
+					3'd3: dp_yellow = (g3_status0 == 2'b10);
+					3'd4: dp_yellow = (g4_status0 == 2'b10);
+					3'd5: dp_yellow = (g5_status0 == 2'b10);
+					3'd6: dp_yellow = (g6_status0 == 2'b10);
 					default: dp_yellow = 1'b0;
 				endcase
 			end
-			
+
 			3'b110: begin // SSD6 showing letter position 1
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status[1] == 2'b10);
-					3'd2: dp_yellow = (g2_status[1] == 2'b10);
-					3'd3: dp_yellow = (g3_status[1] == 2'b10);
-					3'd4: dp_yellow = (g4_status[1] == 2'b10);
-					3'd5: dp_yellow = (g5_status[1] == 2'b10);
-					3'd6: dp_yellow = (g6_status[1] == 2'b10);
+					3'd1: dp_yellow = (g1_status1 == 2'b10);
+					3'd2: dp_yellow = (g2_status1 == 2'b10);
+					3'd3: dp_yellow = (g3_status1 == 2'b10);
+					3'd4: dp_yellow = (g4_status1 == 2'b10);
+					3'd5: dp_yellow = (g5_status1 == 2'b10);
+					3'd6: dp_yellow = (g6_status1 == 2'b10);
 					default: dp_yellow = 1'b0;
 				endcase
 			end
-			
+
 			3'b101: begin // SSD5 showing letter position 2
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status[2] == 2'b10);
-					3'd2: dp_yellow = (g2_status[2] == 2'b10);
-					3'd3: dp_yellow = (g3_status[2] == 2'b10);
-					3'd4: dp_yellow = (g4_status[2] == 2'b10);
-					3'd5: dp_yellow = (g5_status[2] == 2'b10);
-					3'd6: dp_yellow = (g6_status[2] == 2'b10);
+					3'd1: dp_yellow = (g1_status2 == 2'b10);
+					3'd2: dp_yellow = (g2_status2 == 2'b10);
+					3'd3: dp_yellow = (g3_status2 == 2'b10);
+					3'd4: dp_yellow = (g4_status2 == 2'b10);
+					3'd5: dp_yellow = (g5_status2 == 2'b10);
+					3'd6: dp_yellow = (g6_status2 == 2'b10);
 					default: dp_yellow = 1'b0;
 				endcase
 			end
-			
+
 			3'b100: begin // SSD4 showing letter position 3
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status[3] == 2'b10);
-					3'd2: dp_yellow = (g2_status[3] == 2'b10);
-					3'd3: dp_yellow = (g3_status[3] == 2'b10);
-					3'd4: dp_yellow = (g4_status[3] == 2'b10);
-					3'd5: dp_yellow = (g5_status[3] == 2'b10);
-					3'd6: dp_yellow = (g6_status[3] == 2'b10);
+					3'd1: dp_yellow = (g1_status3 == 2'b10);
+					3'd2: dp_yellow = (g2_status3 == 2'b10);
+					3'd3: dp_yellow = (g3_status3 == 2'b10);
+					3'd4: dp_yellow = (g4_status3 == 2'b10);
+					3'd5: dp_yellow = (g5_status3 == 2'b10);
+					3'd6: dp_yellow = (g6_status3 == 2'b10);
 					default: dp_yellow = 1'b0;
 				endcase
 			end
-			
+
 			3'b011: begin // SSD3 showing letter position 4
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status[4] == 2'b10);
-					3'd2: dp_yellow = (g2_status[4] == 2'b10);
-					3'd3: dp_yellow = (g3_status[4] == 2'b10);
-					3'd4: dp_yellow = (g4_status[4] == 2'b10);
-					3'd5: dp_yellow = (g5_status[4] == 2'b10);
-					3'd6: dp_yellow = (g6_status[4] == 2'b10);
+					3'd1: dp_yellow = (g1_status4 == 2'b10);
+					3'd2: dp_yellow = (g2_status4 == 2'b10);
+					3'd3: dp_yellow = (g3_status4 == 2'b10);
+					3'd4: dp_yellow = (g4_status4 == 2'b10);
+					3'd5: dp_yellow = (g5_status4 == 2'b10);
+					3'd6: dp_yellow = (g6_status4 == 2'b10);
 					default: dp_yellow = 1'b0;
 				endcase
 			end
-			
+
 			default: dp_yellow = 1'b0;  // No yellow dot for SSD0-2
 		endcase
 	end
