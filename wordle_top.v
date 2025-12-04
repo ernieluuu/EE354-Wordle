@@ -295,6 +295,8 @@ module wordle_top(
 		case (game_state)
 			4'b0111: SSD0_display = 5'b10110;  // Display 'W' (Win)
 			4'b1000: SSD0_display = 5'b01011;  // Display 'L' (Loss)
+			4'b0001: SSD0_display = 5'b01000;  // Display 'I' (looks like 1 for player 1)
+			4'b0011: SSD0_display = 5'b11001;  // Display 'Z' (looks like 2 for player 2)
 			default: SSD0_display = 5'b11111;  // keep blank
 		endcase
 	end
