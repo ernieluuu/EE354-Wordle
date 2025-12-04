@@ -278,46 +278,78 @@ module wordle_top(
 	
 	assign {Ld5, Ld4, Ld3, Ld2, Ld1, Ld0} = guess_display;
 	
-	// Check if each letter position has GREEN status across all guesses
-	reg [4:0] green_leds;  // One bit for each of the 6 LEDs (LED8-LED13)
+	// Check if each letter position has GREEN status in the IMMEDIATELY PREVIOUS guess
+	reg [4:0] green_leds;  // One bit for each of the 5 LEDs (LED13-LED9) for 5 letter positions
 
 	always @ (g1_status0, g1_status1, g1_status2, g1_status3, g1_status4,
 			  g2_status0, g2_status1, g2_status2, g2_status3, g2_status4,
 			  g3_status0, g3_status1, g3_status2, g3_status3, g3_status4,
 			  g4_status0, g4_status1, g4_status2, g4_status3, g4_status4,
 			  g5_status0, g5_status1, g5_status2, g5_status3, g5_status4,
-			  g6_status0, g6_status1, g6_status2, g6_status3, g6_status4)
+			  g6_status0, g6_status1, g6_status2, g6_status3, g6_status4,
+			  current_guess)
     begin
 
-		// LED8 (position 0): Check if ANY guess has green in position 0
-		green_leds[0] = (g1_status0 == 2'b01) || (g2_status0 == 2'b01) ||
-						(g3_status0 == 2'b01) || (g4_status0 == 2'b01) ||
-						(g5_status0 == 2'b01) || (g6_status0 == 2'b01);
+		// LED9 (position 0): Check if previous guess has green in position 0
+		case (current_guess)
+			3'd1: green_leds[0] = 1'b0;  // No previous guess
+			3'd2: green_leds[0] = (g1_status0 == 2'b01);  // Check guess 1
+			3'd3: green_leds[0] = (g2_status0 == 2'b01);  // Check guess 2
+			3'd4: green_leds[0] = (g3_status0 == 2'b01);  // Check guess 3
+			3'd5: green_leds[0] = (g4_status0 == 2'b01);  // Check guess 4
+			3'd6: green_leds[0] = (g5_status0 == 2'b01);  // Check guess 5
+			default: green_leds[0] = 1'b0;
+		endcase
 
-		// LED9 (position 1)
-		green_leds[1] = (g1_status1 == 2'b01) || (g2_status1 == 2'b01) ||
-						(g3_status1 == 2'b01) || (g4_status1 == 2'b01) ||
-						(g5_status1 == 2'b01) || (g6_status1 == 2'b01);
+		// LED10 (position 1)
+		case (current_guess)
+			3'd1: green_leds[1] = 1'b0;  // No previous guess
+			3'd2: green_leds[1] = (g1_status1 == 2'b01);  // Check guess 1
+			3'd3: green_leds[1] = (g2_status1 == 2'b01);  // Check guess 2
+			3'd4: green_leds[1] = (g3_status1 == 2'b01);  // Check guess 3
+			3'd5: green_leds[1] = (g4_status1 == 2'b01);  // Check guess 4
+			3'd6: green_leds[1] = (g5_status1 == 2'b01);  // Check guess 5
+			default: green_leds[1] = 1'b0;
+		endcase
 
-		// LED10 (position 2)
-		green_leds[2] = (g1_status2 == 2'b01) || (g2_status2 == 2'b01) ||
-						(g3_status2 == 2'b01) || (g4_status2 == 2'b01) ||
-						(g5_status2 == 2'b01) || (g6_status2 == 2'b01);
+		// LED11 (position 2)
+		case (current_guess)
+			3'd1: green_leds[2] = 1'b0;  // No previous guess
+			3'd2: green_leds[2] = (g1_status2 == 2'b01);  // Check guess 1
+			3'd3: green_leds[2] = (g2_status2 == 2'b01);  // Check guess 2
+			3'd4: green_leds[2] = (g3_status2 == 2'b01);  // Check guess 3
+			3'd5: green_leds[2] = (g4_status2 == 2'b01);  // Check guess 4
+			3'd6: green_leds[2] = (g5_status2 == 2'b01);  // Check guess 5
+			default: green_leds[2] = 1'b0;
+		endcase
 
-		// LED11 (position 3)
-		green_leds[3] = (g1_status3 == 2'b01) || (g2_status3 == 2'b01) ||
-						(g3_status3 == 2'b01) || (g4_status3 == 2'b01) ||
-						(g5_status3 == 2'b01) || (g6_status3 == 2'b01);
+		// LED12 (position 3)
+		case (current_guess)
+			3'd1: green_leds[3] = 1'b0;  // No previous guess
+			3'd2: green_leds[3] = (g1_status3 == 2'b01);  // Check guess 1
+			3'd3: green_leds[3] = (g2_status3 == 2'b01);  // Check guess 2
+			3'd4: green_leds[3] = (g3_status3 == 2'b01);  // Check guess 3
+			3'd5: green_leds[3] = (g4_status3 == 2'b01);  // Check guess 4
+			3'd6: green_leds[3] = (g5_status3 == 2'b01);  // Check guess 5
+			default: green_leds[3] = 1'b0;
+		endcase
 
-		// LED12 (position 4)
-		green_leds[4] = (g1_status4 == 2'b01) || (g2_status4 == 2'b01) ||
-						(g3_status4 == 2'b01) || (g4_status4 == 2'b01) ||
-						(g5_status4 == 2'b01) || (g6_status4 == 2'b01);
+		// LED13 (position 4)
+		case (current_guess)
+			3'd1: green_leds[4] = 1'b0;  // No previous guess
+			3'd2: green_leds[4] = (g1_status4 == 2'b01);  // Check guess 1
+			3'd3: green_leds[4] = (g2_status4 == 2'b01);  // Check guess 2
+			3'd4: green_leds[4] = (g3_status4 == 2'b01);  // Check guess 3
+			3'd5: green_leds[4] = (g4_status4 == 2'b01);  // Check guess 4
+			3'd6: green_leds[4] = (g5_status4 == 2'b01);  // Check guess 5
+			default: green_leds[4] = 1'b0;
+		endcase
 
 	end
 
 	// Assign to actual LED outputs
 	assign {Ld13, Ld12, Ld11, Ld10, Ld9} = green_leds;
+	assign Ld8 = 1'b0;  // Tie off unused LED
 	
 	// =========================================================================
     // SSD controls
@@ -387,60 +419,60 @@ module wordle_top(
 		case (ssdscan_clk)
 			3'b111: begin // SSD7 showing letter position 0
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status0 == 2'b10);
-					3'd2: dp_yellow = (g2_status0 == 2'b10);
-					3'd3: dp_yellow = (g3_status0 == 2'b10);
-					3'd4: dp_yellow = (g4_status0 == 2'b10);
-					3'd5: dp_yellow = (g5_status0 == 2'b10);
-					3'd6: dp_yellow = (g6_status0 == 2'b10);
+					3'd1: dp_yellow = 1'b0;  // No previous guess
+					3'd2: dp_yellow = (g1_status0 == 2'b10);  // Check guess 1
+					3'd3: dp_yellow = (g2_status0 == 2'b10);  // Check guess 2
+					3'd4: dp_yellow = (g3_status0 == 2'b10);  // Check guess 3
+					3'd5: dp_yellow = (g4_status0 == 2'b10);  // Check guess 4
+					3'd6: dp_yellow = (g5_status0 == 2'b10);  // Check guess 5
 					default: dp_yellow = 1'b0;
 				endcase
 			end
 
 			3'b110: begin // SSD6 showing letter position 1
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status1 == 2'b10);
-					3'd2: dp_yellow = (g2_status1 == 2'b10);
-					3'd3: dp_yellow = (g3_status1 == 2'b10);
-					3'd4: dp_yellow = (g4_status1 == 2'b10);
-					3'd5: dp_yellow = (g5_status1 == 2'b10);
-					3'd6: dp_yellow = (g6_status1 == 2'b10);
+					3'd1: dp_yellow = 1'b0;  // No previous guess
+					3'd2: dp_yellow = (g1_status1 == 2'b10);  // Check guess 1
+					3'd3: dp_yellow = (g2_status1 == 2'b10);  // Check guess 2
+					3'd4: dp_yellow = (g3_status1 == 2'b10);  // Check guess 3
+					3'd5: dp_yellow = (g4_status1 == 2'b10);  // Check guess 4
+					3'd6: dp_yellow = (g5_status1 == 2'b10);  // Check guess 5
 					default: dp_yellow = 1'b0;
 				endcase
 			end
 
 			3'b101: begin // SSD5 showing letter position 2
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status2 == 2'b10);
-					3'd2: dp_yellow = (g2_status2 == 2'b10);
-					3'd3: dp_yellow = (g3_status2 == 2'b10);
-					3'd4: dp_yellow = (g4_status2 == 2'b10);
-					3'd5: dp_yellow = (g5_status2 == 2'b10);
-					3'd6: dp_yellow = (g6_status2 == 2'b10);
+					3'd1: dp_yellow = 1'b0;  // No previous guess
+					3'd2: dp_yellow = (g1_status2 == 2'b10);  // Check guess 1
+					3'd3: dp_yellow = (g2_status2 == 2'b10);  // Check guess 2
+					3'd4: dp_yellow = (g3_status2 == 2'b10);  // Check guess 3
+					3'd5: dp_yellow = (g4_status2 == 2'b10);  // Check guess 4
+					3'd6: dp_yellow = (g5_status2 == 2'b10);  // Check guess 5
 					default: dp_yellow = 1'b0;
 				endcase
 			end
 
 			3'b100: begin // SSD4 showing letter position 3
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status3 == 2'b10);
-					3'd2: dp_yellow = (g2_status3 == 2'b10);
-					3'd3: dp_yellow = (g3_status3 == 2'b10);
-					3'd4: dp_yellow = (g4_status3 == 2'b10);
-					3'd5: dp_yellow = (g5_status3 == 2'b10);
-					3'd6: dp_yellow = (g6_status3 == 2'b10);
+					3'd1: dp_yellow = 1'b0;  // No previous guess
+					3'd2: dp_yellow = (g1_status3 == 2'b10);  // Check guess 1
+					3'd3: dp_yellow = (g2_status3 == 2'b10);  // Check guess 2
+					3'd4: dp_yellow = (g3_status3 == 2'b10);  // Check guess 3
+					3'd5: dp_yellow = (g4_status3 == 2'b10);  // Check guess 4
+					3'd6: dp_yellow = (g5_status3 == 2'b10);  // Check guess 5
 					default: dp_yellow = 1'b0;
 				endcase
 			end
 
 			3'b011: begin // SSD3 showing letter position 4
 				case (current_guess)
-					3'd1: dp_yellow = (g1_status4 == 2'b10);
-					3'd2: dp_yellow = (g2_status4 == 2'b10);
-					3'd3: dp_yellow = (g3_status4 == 2'b10);
-					3'd4: dp_yellow = (g4_status4 == 2'b10);
-					3'd5: dp_yellow = (g5_status4 == 2'b10);
-					3'd6: dp_yellow = (g6_status4 == 2'b10);
+					3'd1: dp_yellow = 1'b0;  // No previous guess
+					3'd2: dp_yellow = (g1_status4 == 2'b10);  // Check guess 1
+					3'd3: dp_yellow = (g2_status4 == 2'b10);  // Check guess 2
+					3'd4: dp_yellow = (g3_status4 == 2'b10);  // Check guess 3
+					3'd5: dp_yellow = (g4_status4 == 2'b10);  // Check guess 4
+					3'd6: dp_yellow = (g5_status4 == 2'b10);  // Check guess 5
 					default: dp_yellow = 1'b0;
 				endcase
 			end
@@ -465,9 +497,9 @@ module wordle_top(
 			5'b00111: SSD_CATHODES = 7'b1101000 ; // H (left/right bars + middle)
 			5'b01000: SSD_CATHODES = 7'b1001111 ; // I (same as 1)
 			5'b01001: SSD_CATHODES = 7'b1000011 ; // J (right side + bottom)
-			5'b01010: SSD_CATHODES = 7'b1100100 ; // K 
+			5'b01010: SSD_CATHODES = 7'b1010000 ; // K 
 			5'b01011: SSD_CATHODES = 7'b1110001 ; // L (left bar + bottom)
-			5'b01100: SSD_CATHODES = 7'b0101001 ; // M (approximation)
+			5'b01100: SSD_CATHODES = 7'b0001001 ; // M (approximation)
 			5'b01101: SSD_CATHODES = 7'b1101010 ; // N (left + middle + right lower)
 			5'b01110: SSD_CATHODES = 7'b0000001 ; // O (same as 0)
 			5'b01111: SSD_CATHODES = 7'b0011000 ; // P (upper left + top + middle)
@@ -477,11 +509,12 @@ module wordle_top(
 			5'b10011: SSD_CATHODES = 7'b1110000 ; // T (left + top + middle)
 			5'b10100: SSD_CATHODES = 7'b1100011 ; // U 
 			5'b10101: SSD_CATHODES = 7'b1000001 ; // V (same as U - approximation)
-			5'b10110: SSD_CATHODES = 7'b1010111 ; // W 
+			5'b10110: SSD_CATHODES = 7'b1010100 ; // W 
 			5'b10111: SSD_CATHODES = 7'b0101010 ; // X (same as H - approximation)
 			5'b11000: SSD_CATHODES = 7'b1000100 ; // Y (like 4)
 			5'b11001: SSD_CATHODES = 7'b0010010 ; // Z (same as 2)
-			default: SSD_CATHODES = 7'bXXXXXXX ; // default
+			5'b11111: SSD_CATHODES = 7'b1111111 ; // Blank (all segments off)
+			default: SSD_CATHODES = 7'b1111111 ; // default blank
 		endcase
 	end
 endmodule
