@@ -7,7 +7,7 @@
 // Additional Comments: Translated from VHDL by Matthew Christian and Gandhi Puvvada 2/21/2010
 //
 //////////////////////////////////////////////////////////////////////////////////
-
+/*
 module ee201_debouncer(CLK, RESET, PB, DPB, SCEN, MCEN, CCEN);
 
 //inputs
@@ -19,7 +19,7 @@ output DPB;
 output SCEN, MCEN, CCEN;
 
 //parameters
-parameter N_dc = 5;
+parameter N_dc = 28;
 
 //local variables
 // (* fsm_encoding = "user" *) worked with the earlier Xilinx systhesis tool called XST (part of the ISE suite).
@@ -162,3 +162,4 @@ always @ (posedge CLK, posedge RESET)
 
 	
 endmodule // ee201_debouncer
+*/

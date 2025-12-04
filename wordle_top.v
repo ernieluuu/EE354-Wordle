@@ -138,54 +138,39 @@ module wordle_top(
     // =========================================================================
     wire BtnU_debounced, BtnD_debounced, BtnL_debounced, BtnR_debounced, BtnC_debounced;
 
-    ee201_debouncer debounce_up (
+    input_debouncer debounce_up (
         .CLK(clk_100mhz),
         .RESET(reset_btn),
         .PB(BtnU),
-        .DPB(BtnU_debounced),
-        .SCEN(),  // unused
-        .MCEN(),  // unused
-        .CCEN()   // unused
+        .DPB(BtnU_debounced)
     );
 
-    ee201_debouncer debounce_down (
+    input_debouncer debounce_down (
         .CLK(clk_100mhz),
         .RESET(reset_btn),
         .PB(BtnD),
-        .DPB(BtnD_debounced),
-        .SCEN(),
-        .MCEN(),
-        .CCEN()
+        .DPB(BtnD_debounced)
     );
 
-    ee201_debouncer debounce_left (
+    input_debouncer debounce_left (
         .CLK(clk_100mhz),
         .RESET(reset_btn),
         .PB(BtnL),
-        .DPB(BtnL_debounced),
-        .SCEN(),
-        .MCEN(),
-        .CCEN()
+        .DPB(BtnL_debounced)
     );
 
-    ee201_debouncer debounce_right (
+    input_debouncer debounce_right (
         .CLK(clk_100mhz),
         .RESET(reset_btn),
         .PB(BtnR),
-        .DPB(BtnR_debounced),
-        .SCEN(),
-        .MCEN(),
-        .CCEN()
+        .DPB(BtnR_debounced)
     );
 
-    ee201_debouncer debounce_center (
+    input_debouncer debounce_center (
         .CLK(clk_100mhz),
         .RESET(reset_btn),
         .PB(BtnC),
-        .DPB(BtnC_debounced),
-        .SCEN(),
-        .MCEN(),
-        .CCEN()
+        .DPB(BtnC_debounced)
     );
 
     // =========================================================================
