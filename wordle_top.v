@@ -60,14 +60,17 @@ module wordle_top(
 	output wire Ce,
 	output wire Cf,
 	output wire Cg,
-	output wire Dp
+	output wire Dp,
 
-    // VGA Outputs (for future use - commented out for now)
-    // output wire [3:0] vga_r,
-    // output wire [3:0] vga_g,
-    // output wire [3:0] vga_b,
-    // output wire hsync,
-    // output wire vsync
+    // VGA Outputs
+    output wire [3:0] vgaR,
+    output wire [3:0] vgaG,
+    output wire [3:0] vgaB,
+    output wire hSync,
+    output wire vSync,
+
+	// Quad SPI Flash disable
+	output wire QuadSpiFlashCS
 
     // Debug outputs (optional - for testing)
     // output wire [3:0] debug_state,
@@ -81,6 +84,11 @@ module wordle_top(
     // Clock Enable Signal (for button debouncing)
     // Generated at ~70Hz for smooth button response
     wire SCEN;
+
+	// VGA signals
+	wire bright;
+	wire [9:0] hc, vc;
+	wire [11:0] rgb;
 
     // Game state outputs from wordle module (flat wires to match wordle.v outputs)
     wire [4:0] stored_word0, stored_word1, stored_word2, stored_word3, stored_word4;
@@ -226,32 +234,57 @@ module wordle_top(
     );
 
     // =========================================================================
-    // VGA Display Module (Future Implementation)
+    // VGA Display Modules
     // =========================================================================
-    /*
-    // VGA pixel clock generation (25.175 MHz for 640x480 @ 60Hz)
-    wire vga_clk;
 
-    create_slowed_clk #(
-        .max_count(2)                   // 100MHz / (2*2) = 25 MHz (close to 25.175)
-    ) vga_clk_gen (
-        .clk_in(clk_100mhz),
-        .rst_l(~reset_btn),
-        .clk_out(vga_clk)
+    // VGA display controller - generates timing signals
+    display_controller dc (
+        .clk(clk_100mhz),
+        .hSync(hSync),
+        .vSync(vSync),
+        .bright(bright),
+        .hCount(hc),
+        .vCount(vc)
     );
 
-    // VGA display module
-    wordle_display vga_display (
-        .clk(vga_clk),
-        .reset(reset_btn),
-        .vga_r(vga_r),
-        .vga_g(vga_g),
-        .vga_b(vga_b),
-        .hsync(hsync),
-        .vsync(vsync)
-        // TODO: Connect game state signals to display
+    // Wordle VGA display - renders the game grid
+    wordle_vga_display vga_display (
+        .clk(clk_100mhz),
+        .bright(bright),
+        .hCount(hc),
+        .vCount(vc),
+
+        // Connect all game state signals
+        .guess_1_0(guess_1_0), .guess_1_1(guess_1_1), .guess_1_2(guess_1_2), .guess_1_3(guess_1_3), .guess_1_4(guess_1_4),
+        .guess_2_0(guess_2_0), .guess_2_1(guess_2_1), .guess_2_2(guess_2_2), .guess_2_3(guess_2_3), .guess_2_4(guess_2_4),
+        .guess_3_0(guess_3_0), .guess_3_1(guess_3_1), .guess_3_2(guess_3_2), .guess_3_3(guess_3_3), .guess_3_4(guess_3_4),
+        .guess_4_0(guess_4_0), .guess_4_1(guess_4_1), .guess_4_2(guess_4_2), .guess_4_3(guess_4_3), .guess_4_4(guess_4_4),
+        .guess_5_0(guess_5_0), .guess_5_1(guess_5_1), .guess_5_2(guess_5_2), .guess_5_3(guess_5_3), .guess_5_4(guess_5_4),
+        .guess_6_0(guess_6_0), .guess_6_1(guess_6_1), .guess_6_2(guess_6_2), .guess_6_3(guess_6_3), .guess_6_4(guess_6_4),
+
+        .g1_status0(g1_status0), .g1_status1(g1_status1), .g1_status2(g1_status2), .g1_status3(g1_status3), .g1_status4(g1_status4),
+        .g2_status0(g2_status0), .g2_status1(g2_status1), .g2_status2(g2_status2), .g2_status3(g2_status3), .g2_status4(g2_status4),
+        .g3_status0(g3_status0), .g3_status1(g3_status1), .g3_status2(g3_status2), .g3_status3(g3_status3), .g3_status4(g3_status4),
+        .g4_status0(g4_status0), .g4_status1(g4_status1), .g4_status2(g4_status2), .g4_status3(g4_status3), .g4_status4(g4_status4),
+        .g5_status0(g5_status0), .g5_status1(g5_status1), .g5_status2(g5_status2), .g5_status3(g5_status3), .g5_status4(g5_status4),
+        .g6_status0(g6_status0), .g6_status1(g6_status1), .g6_status2(g6_status2), .g6_status3(g6_status3), .g6_status4(g6_status4),
+
+        .current_guess(current_guess),
+        .game_state(game_state),
+        .wf_pos(wf_pos),
+        .wf_current_word0(wf_current_word0), .wf_current_word1(wf_current_word1), .wf_current_word2(wf_current_word2),
+        .wf_current_word3(wf_current_word3), .wf_current_word4(wf_current_word4),
+
+        .rgb(rgb)
     );
-    */
+
+    // Connect RGB outputs
+    assign vgaR = rgb[11:8];
+    assign vgaG = rgb[7:4];
+    assign vgaB = rgb[3:0];
+
+    // Disable Quad SPI Flash
+    assign QuadSpiFlashCS = 1'b1;
 
     // =========================================================================
     // Debug Outputs (Optional)
