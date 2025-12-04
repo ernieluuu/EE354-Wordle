@@ -90,11 +90,11 @@ module word_format(
                     else if(DOWN) begin
                         // Decrement letter at current position
                         case (pos)
-                            3'd0: word_array0 <= (word_array0 == 0) ? 5'd25 : word_array0 - 1;
-                            3'd1: word_array1 <= (word_array1 == 0) ? 5'd25 : word_array1 - 1;
-                            3'd2: word_array2 <= (word_array2 == 0) ? 5'd25 : word_array2 - 1;
-                            3'd3: word_array3 <= (word_array3 == 0) ? 5'd25 : word_array3 - 1;
-                            3'd4: word_array4 <= (word_array4 == 0) ? 5'd25 : word_array4 - 1;
+                            3'd0: word_array0 <= (word_array0 == 0 || word_array0 > 25) ? 5'd25 : word_array0 - 1;
+                            3'd1: word_array1 <= (word_array1 == 0 || word_array1 > 25) ? 5'd25 : word_array1 - 1;
+                            3'd2: word_array2 <= (word_array2 == 0 || word_array2 > 25) ? 5'd25 : word_array2 - 1;
+                            3'd3: word_array3 <= (word_array3 == 0 || word_array3 > 25) ? 5'd25 : word_array3 - 1;
+                            3'd4: word_array4 <= (word_array4 == 0 || word_array4 > 25) ? 5'd25 : word_array4 - 1;
                         endcase
                     end
                     else if (RIGHT) begin
