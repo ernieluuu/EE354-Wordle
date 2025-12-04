@@ -134,6 +134,61 @@ module wordle_top(
     );
 
     // =========================================================================
+    // Button Debouncing
+    // =========================================================================
+    wire BtnU_debounced, BtnD_debounced, BtnL_debounced, BtnR_debounced, BtnC_debounced;
+
+    ee201_debouncer debounce_up (
+        .CLK(clk_100mhz),
+        .RESET(reset_btn),
+        .PB(BtnU),
+        .DPB(BtnU_debounced),
+        .SCEN(),  // unused
+        .MCEN(),  // unused
+        .CCEN()   // unused
+    );
+
+    ee201_debouncer debounce_down (
+        .CLK(clk_100mhz),
+        .RESET(reset_btn),
+        .PB(BtnD),
+        .DPB(BtnD_debounced),
+        .SCEN(),
+        .MCEN(),
+        .CCEN()
+    );
+
+    ee201_debouncer debounce_left (
+        .CLK(clk_100mhz),
+        .RESET(reset_btn),
+        .PB(BtnL),
+        .DPB(BtnL_debounced),
+        .SCEN(),
+        .MCEN(),
+        .CCEN()
+    );
+
+    ee201_debouncer debounce_right (
+        .CLK(clk_100mhz),
+        .RESET(reset_btn),
+        .PB(BtnR),
+        .DPB(BtnR_debounced),
+        .SCEN(),
+        .MCEN(),
+        .CCEN()
+    );
+
+    ee201_debouncer debounce_center (
+        .CLK(clk_100mhz),
+        .RESET(reset_btn),
+        .PB(BtnC),
+        .DPB(BtnC_debounced),
+        .SCEN(),
+        .MCEN(),
+        .CCEN()
+    );
+
+    // =========================================================================
     // Clock Divider for SSD Scanning
     // =========================================================================
     // Generate divided clock for SSD scanning (bits 20:18 used for 8-display scan)
@@ -155,11 +210,11 @@ module wordle_top(
         // Button inputs (with clock enable for debouncing)
         .SCEN(SCEN),
         .Start(start_btn),
-        .UP(BtnU),
-        .DOWN(BtnD),
-        .LEFT(BtnL),
-        .RIGHT(BtnR),
-        .CENTER(BtnC),
+        .UP(BtnU_debounced),
+        .DOWN(BtnD_debounced),
+        .LEFT(BtnL_debounced),
+        .RIGHT(BtnR_debounced),
+        .CENTER(BtnC_debounced),
 
         // Game state outputs (connect to VGA module in future)
         .stored_word0(stored_word0), .stored_word1(stored_word1), .stored_word2(stored_word2),
