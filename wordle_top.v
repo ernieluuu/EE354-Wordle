@@ -40,6 +40,7 @@ module wordle_top(
 	output wire Ld0,
 
 	input wire Sw0, // for reset
+	input wire Sw1, // for start
 	
 	// SSD Anodes
 	output wire An7,
