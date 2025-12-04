@@ -57,11 +57,11 @@ module word_format(
         if(RESET) begin
             pos <= 0;
             state <= I;
-            word_array0 <= 5'd0;    // 'A'
-            word_array1 <= 5'd0;    // 'A'
-            word_array2 <= 5'd0;    // 'A'
-            word_array3 <= 5'd0;    // 'A'
-            word_array4 <= 5'd0;    // 'A'
+            word_array0 <= 5'd31;   // Blank
+            word_array1 <= 5'd31;   // Blank
+            word_array2 <= 5'd31;   // Blank
+            word_array3 <= 5'd31;   // Blank
+            word_array4 <= 5'd31;   // Blank
             DONE <= 1'b0;
         end
         else begin
@@ -97,8 +97,22 @@ module word_format(
                             3'd4: word_array4 <= (word_array4 == 0) ? 5'd25 : word_array4 - 1;
                         endcase
                     end
-                    else if (LEFT || RIGHT)
+                    else if (RIGHT) begin
+                        // Move position right AND switch to PosChange state
+                        if(pos == 4)
+                            pos <= 0;
+                        else
+                            pos <= pos + 1;
                         state <= PosChange;
+                    end
+                    else if (LEFT) begin
+                        // Move position left AND switch to PosChange state
+                        if(pos == 0)
+                            pos <= 4;
+                        else
+                            pos <= pos - 1;
+                        state <= PosChange;
+                    end
                     else if (CENTER) begin
                         DONE <= 1'b1;
                         state <= I;

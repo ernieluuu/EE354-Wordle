@@ -178,21 +178,21 @@ module wordle(
             current_guess <= 3'd1;
             
             // Reset all stored data
-            stored_word0 <= 5'd0; stored_word1 <= 5'd0; stored_word2 <= 5'd0;
-            stored_word3 <= 5'd0; stored_word4 <= 5'd0;
-            
-            guess_1_0 <= 5'd0; guess_1_1 <= 5'd0; guess_1_2 <= 5'd0;
-            guess_1_3 <= 5'd0; guess_1_4 <= 5'd0;
-            guess_2_0 <= 5'd0; guess_2_1 <= 5'd0; guess_2_2 <= 5'd0;
-            guess_2_3 <= 5'd0; guess_2_4 <= 5'd0;
-            guess_3_0 <= 5'd0; guess_3_1 <= 5'd0; guess_3_2 <= 5'd0;
-            guess_3_3 <= 5'd0; guess_3_4 <= 5'd0;
-            guess_4_0 <= 5'd0; guess_4_1 <= 5'd0; guess_4_2 <= 5'd0;
-            guess_4_3 <= 5'd0; guess_4_4 <= 5'd0;
-            guess_5_0 <= 5'd0; guess_5_1 <= 5'd0; guess_5_2 <= 5'd0;
-            guess_5_3 <= 5'd0; guess_5_4 <= 5'd0;
-            guess_6_0 <= 5'd0; guess_6_1 <= 5'd0; guess_6_2 <= 5'd0;
-            guess_6_3 <= 5'd0; guess_6_4 <= 5'd0;
+            stored_word0 <= 5'd31; stored_word1 <= 5'd31; stored_word2 <= 5'd31;
+            stored_word3 <= 5'd31; stored_word4 <= 5'd31;
+
+            guess_1_0 <= 5'd31; guess_1_1 <= 5'd31; guess_1_2 <= 5'd31;
+            guess_1_3 <= 5'd31; guess_1_4 <= 5'd31;
+            guess_2_0 <= 5'd31; guess_2_1 <= 5'd31; guess_2_2 <= 5'd31;
+            guess_2_3 <= 5'd31; guess_2_4 <= 5'd31;
+            guess_3_0 <= 5'd31; guess_3_1 <= 5'd31; guess_3_2 <= 5'd31;
+            guess_3_3 <= 5'd31; guess_3_4 <= 5'd31;
+            guess_4_0 <= 5'd31; guess_4_1 <= 5'd31; guess_4_2 <= 5'd31;
+            guess_4_3 <= 5'd31; guess_4_4 <= 5'd31;
+            guess_5_0 <= 5'd31; guess_5_1 <= 5'd31; guess_5_2 <= 5'd31;
+            guess_5_3 <= 5'd31; guess_5_4 <= 5'd31;
+            guess_6_0 <= 5'd31; guess_6_1 <= 5'd31; guess_6_2 <= 5'd31;
+            guess_6_3 <= 5'd31; guess_6_4 <= 5'd31;
             
             g1_status0 <= UNCHECKED; g1_status1 <= UNCHECKED; g1_status2 <= UNCHECKED;
             g1_status3 <= UNCHECKED; g1_status4 <= UNCHECKED;
@@ -216,11 +216,11 @@ module wordle(
             cmp_started <= 1'b0;
             
             // Reset internal guess word
-            current_guess_word0 <= 5'd0;
-            current_guess_word1 <= 5'd0;
-            current_guess_word2 <= 5'd0;
-            current_guess_word3 <= 5'd0;
-            current_guess_word4 <= 5'd0;
+            current_guess_word0 <= 5'd31;
+            current_guess_word1 <= 5'd31;
+            current_guess_word2 <= 5'd31;
+            current_guess_word3 <= 5'd31;
+            current_guess_word4 <= 5'd31;
         end
         else begin
             // Default: deassert one-shot signals
@@ -447,18 +447,18 @@ module wordle(
                         cmp_started <= 1'b0;
                         
                         // Clear all guesses
-                        guess_1_0 <= 5'd0; guess_1_1 <= 5'd0; guess_1_2 <= 5'd0;
-                        guess_1_3 <= 5'd0; guess_1_4 <= 5'd0;
-                        guess_2_0 <= 5'd0; guess_2_1 <= 5'd0; guess_2_2 <= 5'd0;
-                        guess_2_3 <= 5'd0; guess_2_4 <= 5'd0;
-                        guess_3_0 <= 5'd0; guess_3_1 <= 5'd0; guess_3_2 <= 5'd0;
-                        guess_3_3 <= 5'd0; guess_3_4 <= 5'd0;
-                        guess_4_0 <= 5'd0; guess_4_1 <= 5'd0; guess_4_2 <= 5'd0;
-                        guess_4_3 <= 5'd0; guess_4_4 <= 5'd0;
-                        guess_5_0 <= 5'd0; guess_5_1 <= 5'd0; guess_5_2 <= 5'd0;
-                        guess_5_3 <= 5'd0; guess_5_4 <= 5'd0;
-                        guess_6_0 <= 5'd0; guess_6_1 <= 5'd0; guess_6_2 <= 5'd0;
-                        guess_6_3 <= 5'd0; guess_6_4 <= 5'd0;
+                        guess_1_0 <= 5'd31; guess_1_1 <= 5'd31; guess_1_2 <= 5'd31;
+                        guess_1_3 <= 5'd31; guess_1_4 <= 5'd31;
+                        guess_2_0 <= 5'd31; guess_2_1 <= 5'd31; guess_2_2 <= 5'd31;
+                        guess_2_3 <= 5'd31; guess_2_4 <= 5'd31;
+                        guess_3_0 <= 5'd31; guess_3_1 <= 5'd31; guess_3_2 <= 5'd31;
+                        guess_3_3 <= 5'd31; guess_3_4 <= 5'd31;
+                        guess_4_0 <= 5'd31; guess_4_1 <= 5'd31; guess_4_2 <= 5'd31;
+                        guess_4_3 <= 5'd31; guess_4_4 <= 5'd31;
+                        guess_5_0 <= 5'd31; guess_5_1 <= 5'd31; guess_5_2 <= 5'd31;
+                        guess_5_3 <= 5'd31; guess_5_4 <= 5'd31;
+                        guess_6_0 <= 5'd31; guess_6_1 <= 5'd31; guess_6_2 <= 5'd31;
+                        guess_6_3 <= 5'd31; guess_6_4 <= 5'd31;
                         
                         // Clear all statuses
                         g1_status0 <= UNCHECKED; g1_status1 <= UNCHECKED; g1_status2 <= UNCHECKED;
@@ -490,18 +490,18 @@ module wordle(
                         cmp_started <= 1'b0;
                         
                         // Clear all guesses
-                        guess_1_0 <= 5'd0; guess_1_1 <= 5'd0; guess_1_2 <= 5'd0;
-                        guess_1_3 <= 5'd0; guess_1_4 <= 5'd0;
-                        guess_2_0 <= 5'd0; guess_2_1 <= 5'd0; guess_2_2 <= 5'd0;
-                        guess_2_3 <= 5'd0; guess_2_4 <= 5'd0;
-                        guess_3_0 <= 5'd0; guess_3_1 <= 5'd0; guess_3_2 <= 5'd0;
-                        guess_3_3 <= 5'd0; guess_3_4 <= 5'd0;
-                        guess_4_0 <= 5'd0; guess_4_1 <= 5'd0; guess_4_2 <= 5'd0;
-                        guess_4_3 <= 5'd0; guess_4_4 <= 5'd0;
-                        guess_5_0 <= 5'd0; guess_5_1 <= 5'd0; guess_5_2 <= 5'd0;
-                        guess_5_3 <= 5'd0; guess_5_4 <= 5'd0;
-                        guess_6_0 <= 5'd0; guess_6_1 <= 5'd0; guess_6_2 <= 5'd0;
-                        guess_6_3 <= 5'd0; guess_6_4 <= 5'd0;
+                        guess_1_0 <= 5'd31; guess_1_1 <= 5'd31; guess_1_2 <= 5'd31;
+                        guess_1_3 <= 5'd31; guess_1_4 <= 5'd31;
+                        guess_2_0 <= 5'd31; guess_2_1 <= 5'd31; guess_2_2 <= 5'd31;
+                        guess_2_3 <= 5'd31; guess_2_4 <= 5'd31;
+                        guess_3_0 <= 5'd31; guess_3_1 <= 5'd31; guess_3_2 <= 5'd31;
+                        guess_3_3 <= 5'd31; guess_3_4 <= 5'd31;
+                        guess_4_0 <= 5'd31; guess_4_1 <= 5'd31; guess_4_2 <= 5'd31;
+                        guess_4_3 <= 5'd31; guess_4_4 <= 5'd31;
+                        guess_5_0 <= 5'd31; guess_5_1 <= 5'd31; guess_5_2 <= 5'd31;
+                        guess_5_3 <= 5'd31; guess_5_4 <= 5'd31;
+                        guess_6_0 <= 5'd31; guess_6_1 <= 5'd31; guess_6_2 <= 5'd31;
+                        guess_6_3 <= 5'd31; guess_6_4 <= 5'd31;
                         
                         // Clear all statuses
                         g1_status0 <= UNCHECKED; g1_status1 <= UNCHECKED; g1_status2 <= UNCHECKED;
