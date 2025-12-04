@@ -202,14 +202,17 @@ endmodule
 // Letter ROM module (simplified - would need actual letter bitmap data)
 module letter_rom (
     input wire clk,
-    input wire [10:0] addr,  // 26 letters * 48 * 48 = ~60K pixels
+    input wire [10:0] addr,
     output reg data
 );
-    // This would be initialized with actual letter bitmaps
-    // For now, just a placeholder that draws a simple pattern
+    // 26 letters * 48 * 48 = 59,904 bits
+    reg rom [0:59903];
+    
+    initial begin
+        $readmemb("sprites\letters.mem", rom);
+    end
+    
     always @(posedge clk) begin
-        // Simple pattern for demonstration
-        // In reality, you'd use: initial $readmemb("letters.mem", rom);
-        data <= addr[3] ^ addr[4]; // Creates a simple pattern
+        data <= rom[addr];
     end
 endmodule
