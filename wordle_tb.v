@@ -4,6 +4,14 @@
 // File Name: wordle_tb.v
 // Description: Testbench for wordle.v (main Wordle game state machine)
 //              Uses force/release shortcuts to speed up testing
+//              Robust version for Vivado XSim compatibility
+//
+// KEY FIX: The issue with Vivado was that after forcing DONE=1 and releasing it,
+// the word_format module's internal state wasn't in sync, causing DONE to stay
+// high or behave unpredictably. The fix is to:
+// 1. Force word_format's state to INI (which clears DONE on next clock)
+// 2. Wait extra cycles after release for proper synchronization
+// 3. Explicitly force DONE=0 before releasing to ensure clean handoff
 //////////////////////////////////////////////////////////////////////////////////
 `timescale 1ns / 1ps
 `default_nettype none
@@ -210,7 +218,7 @@ module wordle_tb;
         #(CLK_PERIOD);
         
         // =====================================================================
-        // Test #2: Mixed colors (HELLO vs WEARY -> WORLD)
+        // Test #2: Mixed colors (HELLO vs WORLD)
         // =====================================================================
         test_number = test_number + 1;
         $display("\n=== Test #%0d: Mixed colors test ===", test_number);
@@ -223,7 +231,6 @@ module wordle_tb;
         set_word_fast(5'd7, 5'd4, 5'd11, 5'd11, 5'd14);  // HELLO
         
         // P2 guesses WORLD (W=22, O=14, R=17, L=11, D=3)
-        // Expected: W=GRAY, O=YELLOW, R=GRAY, L=YELLOW, D=GRAY
         wait_for_state(P2_GUESS);
         set_word_fast(5'd22, 5'd14, 5'd17, 5'd11, 5'd3);  // WORLD
         
@@ -422,33 +429,52 @@ module wordle_tb;
 
     // =========================================================================
     // Task: Set word quickly using force/release on word_format
+    // ROBUST VERSION for Vivado XSim:
+    // 1. Forces all values including state
+    // 2. Forces DONE=0 before final release to ensure clean state
+    // 3. Uses more clock cycles for synchronization
     // =========================================================================
     task set_word_fast;
         input [4:0] w0, w1, w2, w3, w4;
         begin
-            // Wait a couple cycles for state to stabilize
+            // Wait for state to stabilize after entering P1_SET or P2_GUESS
+            @(posedge clk);
             @(posedge clk);
             @(posedge clk);
             
-            // Force the word_format module to have the desired word
+            // Step 1: Force word values and set DONE=1 with state=INI
+            // The INI state ensures that when we release, the state machine
+            // will naturally clear DONE
             force UUT.wf_inst.word_array0 = w0;
             force UUT.wf_inst.word_array1 = w1;
             force UUT.wf_inst.word_array2 = w2;
             force UUT.wf_inst.word_array3 = w3;
             force UUT.wf_inst.word_array4 = w4;
             force UUT.wf_inst.DONE = 1'b1;
+            force UUT.wf_inst.state = 3'b001;  // INI state
             
+            // Let wordle.v see DONE=1 and capture the word
             @(posedge clk);
             @(posedge clk);
             
-            // Release the forces
+            // Step 2: Keep word values but set DONE=0 before releasing
+            // This ensures DONE is cleanly low when we release
+            force UUT.wf_inst.DONE = 1'b0;
+            
+            @(posedge clk);
+            
+            // Step 3: Release all forces
             release UUT.wf_inst.word_array0;
             release UUT.wf_inst.word_array1;
             release UUT.wf_inst.word_array2;
             release UUT.wf_inst.word_array3;
             release UUT.wf_inst.word_array4;
             release UUT.wf_inst.DONE;
+            release UUT.wf_inst.state;
             
+            // Step 4: Wait for system to stabilize
+            @(posedge clk);
+            @(posedge clk);
             @(posedge clk);
         end
     endtask
