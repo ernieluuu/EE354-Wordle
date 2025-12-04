@@ -9,7 +9,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 module word_format(
     input wire Clk,
-    input wire SCEN,
     input wire RESET,
     input wire Start,
     input wire UP,
@@ -78,56 +77,52 @@ module word_format(
                 end
 
                 LetterChange: begin
-                    if(SCEN) begin
-                        if(UP) begin
-                            // Increment letter at current position
-                            case (pos)
-                                3'd0: word_array0 <= (word_array0 >= 25) ? 5'd0 : word_array0 + 1;
-                                3'd1: word_array1 <= (word_array1 >= 25) ? 5'd0 : word_array1 + 1;
-                                3'd2: word_array2 <= (word_array2 >= 25) ? 5'd0 : word_array2 + 1;
-                                3'd3: word_array3 <= (word_array3 >= 25) ? 5'd0 : word_array3 + 1;
-                                3'd4: word_array4 <= (word_array4 >= 25) ? 5'd0 : word_array4 + 1;
-                            endcase
-                        end
-                        else if(DOWN) begin
-                            // Decrement letter at current position
-                            case (pos)
-                                3'd0: word_array0 <= (word_array0 == 0) ? 5'd25 : word_array0 - 1;
-                                3'd1: word_array1 <= (word_array1 == 0) ? 5'd25 : word_array1 - 1;
-                                3'd2: word_array2 <= (word_array2 == 0) ? 5'd25 : word_array2 - 1;
-                                3'd3: word_array3 <= (word_array3 == 0) ? 5'd25 : word_array3 - 1;
-                                3'd4: word_array4 <= (word_array4 == 0) ? 5'd25 : word_array4 - 1;
-                            endcase
-                        end
-                        else if (LEFT || RIGHT)
-                            state <= PosChange;
-                        else if (CENTER) begin
-                            DONE <= 1'b1;
-                            state <= I;
-                        end
+                    if(UP) begin
+                        // Increment letter at current position
+                        case (pos)
+                            3'd0: word_array0 <= (word_array0 >= 25) ? 5'd0 : word_array0 + 1;
+                            3'd1: word_array1 <= (word_array1 >= 25) ? 5'd0 : word_array1 + 1;
+                            3'd2: word_array2 <= (word_array2 >= 25) ? 5'd0 : word_array2 + 1;
+                            3'd3: word_array3 <= (word_array3 >= 25) ? 5'd0 : word_array3 + 1;
+                            3'd4: word_array4 <= (word_array4 >= 25) ? 5'd0 : word_array4 + 1;
+                        endcase
+                    end
+                    else if(DOWN) begin
+                        // Decrement letter at current position
+                        case (pos)
+                            3'd0: word_array0 <= (word_array0 == 0) ? 5'd25 : word_array0 - 1;
+                            3'd1: word_array1 <= (word_array1 == 0) ? 5'd25 : word_array1 - 1;
+                            3'd2: word_array2 <= (word_array2 == 0) ? 5'd25 : word_array2 - 1;
+                            3'd3: word_array3 <= (word_array3 == 0) ? 5'd25 : word_array3 - 1;
+                            3'd4: word_array4 <= (word_array4 == 0) ? 5'd25 : word_array4 - 1;
+                        endcase
+                    end
+                    else if (LEFT || RIGHT)
+                        state <= PosChange;
+                    else if (CENTER) begin
+                        DONE <= 1'b1;
+                        state <= I;
                     end
                 end
 
                 PosChange: begin
-                    if(SCEN) begin
-                        if(RIGHT) begin
-                            if(pos == 4)
-                                pos <= 0;
-                            else
-                                pos <= pos + 1;
-                        end
-                        else if(LEFT) begin
-                            if(pos == 0)
-                                pos <= 4;
-                            else
-                                pos <= pos - 1;
-                        end
-                        else if(UP || DOWN)
-                            state <= LetterChange;
-                        else if(CENTER) begin
-                            DONE <= 1'b1;
-                            state <= I;
-                        end
+                    if(RIGHT) begin
+                        if(pos == 4)
+                            pos <= 0;
+                        else
+                            pos <= pos + 1;
+                    end
+                    else if(LEFT) begin
+                        if(pos == 0)
+                            pos <= 4;
+                        else
+                            pos <= pos - 1;
+                    end
+                    else if(UP || DOWN)
+                        state <= LetterChange;
+                    else if(CENTER) begin
+                        DONE <= 1'b1;
+                        state <= I;
                     end
                 end
                

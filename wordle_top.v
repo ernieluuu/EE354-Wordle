@@ -192,8 +192,7 @@ module wordle_top(
         .clk(clk_100mhz),
         .reset(reset_btn),
 
-        // Button inputs (with clock enable for debouncing)
-        .SCEN(SCEN),
+        // Button inputs (debounced)
         .Start(start_btn),
         .UP(BtnU_debounced),
         .DOWN(BtnD_debounced),

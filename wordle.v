@@ -9,9 +9,8 @@
 module wordle(
     input wire clk,
     input wire reset,
-    
+
     // Player inputs (directly active buttons after debouncing from top)
-    input wire SCEN,          // Single clock enable for button presses
     input wire Start,         // Start game button
     input wire UP,
     input wire DOWN,
@@ -115,7 +114,6 @@ module wordle(
     
     word_format wf_inst (
         .Clk(clk),
-        .SCEN(SCEN),
         .RESET(wf_reset),
         .Start(wf_start),
         .UP(UP),
